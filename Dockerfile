@@ -1,4 +1,4 @@
-FROM python:3.9-slim
+FROM python:3.11-slim
 
 EXPOSE 8501
 
@@ -13,7 +13,13 @@ RUN apt-get update && apt-get install -y \
 
 RUN git clone https://github.com/lbalmeida/streamlit.git .
 
+RUN python -m venv venv
+
+#RUN source venv/bin/activate
+
 RUN pip3 install -r requeriments.txt
+
+RUN pip install --upgrade pip
 
 HEALTHCHECK CMD curl --fail http://localhost:8501/_stcore/health
 
