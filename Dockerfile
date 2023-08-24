@@ -10,7 +10,7 @@ RUN apt-get update && apt-get install -y \
     git \
     && rm -rf /var/lib/apt/listis/*
 
-RUN git clone https://github.com/streamlit/streamlit-example.git .
+RUN git clone https://github.com/lbalmeida/streamlit.git .
 
 RUN pip3 install -r requeriments.txt
 
