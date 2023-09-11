@@ -2,6 +2,8 @@ import streamlit as st
 import os
 import locale
 import services.dbcon as dbcon
+import tools.tools as tools
+import pandas as pd
 
 
 bar = st.sidebar
@@ -16,49 +18,82 @@ mobilidade = None
 moradia = None
 
 if cpf:
-    permanencia = dbcon.pesquisa_permanencia(cpf)
-    apoio = dbcon.pesquisa_apoio(cpf)
-    nada_consta = dbcon.pesquisa_nada_consta(cpf)
-    mobilidade = dbcon.pesquisa_mobilidade(cpf)
-    moradia = dbcon.pesquisa_moradia(cpf)
-
-    if permanencia or apoio or nada_consta or mobilidade:
-        arquivo = f'fotos\{cpf}.jpg'
-        if os.path.isfile(arquivo):
-            bar.image(arquivo)
+    if tools.validar_cpf(cpf):
+        buscas = ''
+#        dados = {'Sistema': ['Permanência', 'Apoio', 'Nada Consta', 'Mobilidade', 'Moradia']}
+        permanencia = dbcon.pesquisa_permanencia(cpf)
+        if permanencia:
+            buscas = buscas + 'Permanência: :green[Encontrado]\n\n'
         else:
-            bar.image('fotos\John Doe.jpg')
-    else:
-        bar.error('Informe um CPF correto!')
+            buscas = buscas + 'Permanência: :red[Não encontrado]\n\n'
 
+        apoio = dbcon.pesquisa_apoio(cpf)
+        if apoio:
+            buscas = buscas + 'Apoio: :green[Encontrado]\n\n'
+        else:
+            buscas = buscas + 'Apoio: :red[Não encontrado]\n\n'
+
+        nada_consta = dbcon.pesquisa_nada_consta(cpf)
+        if nada_consta:
+            buscas = buscas + 'Nada Consta: :green[Encontrado]\n\n'
+        else:
+            buscas = buscas + 'Nada Consta: :red[Não encontrado]\n\n'
+
+        mobilidade = dbcon.pesquisa_mobilidade(cpf)
+        if mobilidade:
+            buscas = buscas + 'Mobilidade: :green[Encontrado]\n\n'
+        else:
+            buscas = buscas + 'Mobilidade: :red[Não encontrado]\n\n'
+
+        moradia = dbcon.pesquisa_moradia(cpf)
+        if moradia:
+            buscas = buscas + 'Moradia: :green[Encontrado]\n\n'
+        else:
+            buscas = buscas + 'Moradia: :red[Não encontrado]\n\n'
+
+        bar.info(f'{buscas}')
+
+        if permanencia or apoio or nada_consta or mobilidade:
+            arquivo = f'fotos\{cpf}.jpg'
+            if os.path.isfile(arquivo):
+                bar.image(arquivo)
+            else:
+                bar.image('fotos\John Doe.jpg')
+        else:
+            bar.info(f':green[CPF não encontrado!]')
+    else:
+        bar.info(f':red[CPF inválido!]')
+
+else:
+    bar.info('Informe um CPF')
 
 if permanencia:
     ultimo_movimento = f'{permanencia[0].upper()}'
     data_movimento = '{:%d/%m/%Y}'.format(permanencia[12])
 
-    with st.expander(f'Auxílio Permanência - {permanencia[2]}', expanded=True):
+    with st.expander(f'{permanencia[2]} - :green[Auxílio Permanência]', expanded=True):
         container = st.container()
 
         a, b = container.columns(2)
-        a.info(f'Inscrição: {permanencia[1]}')
+        a.info(f'Inscrição: :green[{permanencia[1]}]')
 
         if ultimo_movimento in ['INCLUSÃO', 'ALTERAÇÃO']:
-            b.success(f'{ultimo_movimento} - {data_movimento}')
+            b.info(f':green[{ultimo_movimento}] - :green[{data_movimento}]')
         else:
-            b.error(f'{ultimo_movimento} - {data_movimento}')
+            b.info(f':red[{ultimo_movimento}] - :green[{data_movimento}]')
 
         a, b = container.columns(2)
-        a.info(f'Matrícula: {permanencia[3]}')
-        b.info(f'E-Mail: {permanencia[5]}')
+        a.info(f'Matrícula: :green[{permanencia[3]}]')
+        b.info(f'E-Mail: :blue[{permanencia[5]}]')
 
 if apoio:
     status = f'{apoio[11].upper()}'
 
-    with st.expander(f'Bolsa de Apoio Acadêmico - {apoio[3]}', expanded=True):
+    with st.expander(f'{apoio[3]} - :green[Bolsa de Apoio Acadêmico]', expanded=True):
         container = st.container()
 
         a, b = container.columns(2)
-        a.info(f'Código: {apoio[1]}')
+        a.info(f'Código: :green[{apoio[1]}]')
 
         if status == 'ATIVA':
             b.info(f':green[{status}]')
@@ -66,50 +101,61 @@ if apoio:
             b.info(f':red[{status}]')
 
         a, b = container.columns(2)
-        a.info(f'Matrícula: {apoio[2]}')
-        b.info(f'E-Mail: {apoio[4]}')
+        a.info(f'Matrícula: :green[{apoio[2]}]')
+        b.info(f'E-Mail: :blue[{apoio[4]}]')
 
 if nada_consta:
-    with st.expander('Nada Consta', expanded=True):
+    with st.expander(f'{nada_consta[1]} - :green[Nada Consta]', expanded=True):
         container = st.container()
 
         a, b = container.columns(2)
-        a.info(f'Matrícula: {nada_consta[0]}')
-        b.info(f'Tipo de Bolsa: {nada_consta[3]}')
+        a.info(f'Matrícula: :green[{nada_consta[0]}]')
+        b.info(f'Tipo de Bolsa: :green[{nada_consta[3]}]')
 
-        st.info(f'Nome: {nada_consta[1]}')
-        st.info(f'Referência: {nada_consta[5]}')
+        st.info(f'Referência: :green[{nada_consta[5]}]')
 
-        locale.setlocale(locale.LC_ALL, 'pt_BR.UTF-8')
-        valor = locale.currency(nada_consta[4], grouping=True, symbol=True)
-        st.info(f'Valor: {valor}')
+        try:
+            locale.setlocale(locale.LC_ALL, 'pt_BR.UTF-8')
+            valor = locale.currency(nada_consta[4], grouping=True, symbol=True)
+        except:
+            valor = nada_consta[4]
 
-        if nada_consta[6] or nada_consta[8]:
-            st.info(f'Observação: {nada_consta[6]} - {nada_consta[8]}')
+        if valor:        
+            st.info(f'Valor: :green[{valor}]')
+
+        if nada_consta[6]:
+            st.info(f'Observação: :green[{nada_consta[6]}]')
 
 if mobilidade:
-    with st.expander(f'Mobilidade - {mobilidade[0]}', expanded=True):
+    with st.expander(f'{mobilidade[0]} - :green[Mobilidade]', expanded=True):
         container = st.container()
 
         a, b, c = container.columns(3)
-        a.info(f'Bicicleta: {mobilidade[1]}')
-        b.info(f'Matrícula: {mobilidade[4]}')
-        c.info('Retirada: {:%d/%m/%Y}'.format(mobilidade[2]))
+        a.info(f'Bicicleta: :green[{mobilidade[1]}]')
+        b.info(f'Matrícula: :green[{mobilidade[4]}]')
+        c.info('Retirada: :green[{:%d/%m/%Y}]'.format(mobilidade[2]))
 
         a, b = container.columns(2)
-        a.info(f'Situação: {mobilidade[5]}')
-        b.info('Data Situação: {:%d/%m/%Y}'.format(mobilidade[6]))
+        a.info(f'Situação: :green[{mobilidade[5]}]')
+        b.info('Data Situação: :green[{:%d/%m/%Y}]'.format(mobilidade[6]))
 
-        st.info(f'Devolução: {mobilidade[3]}')
-        st.info(f'Observação: {mobilidade[8]}')
+        if mobilidade[3]:
+            st.info(f'Devolução: :green[{mobilidade[3]}]')
+        else:
+            st.info(f'Devolução:')
+
+        if mobilidade[8]:
+            st.info(f'Observação: :green[{mobilidade[8]}]')
+        else:
+            st.info(f'Observação:')
 
 if moradia:
-    with st.expander(f'Moradia - {moradia[2]}', expanded=True):
+    with st.expander(f'{moradia[2]} - :green[Moradia]', expanded=True):
         container = st.container()
 
         a, b = container.columns(2)
-        a.info(f'Matrícula: {moradia[1]}')
+        a.info(f'Matrícula: :green[{moradia[1]}]')
 
         locale.setlocale(locale.LC_ALL, 'pt_BR.UTF-8')
         valor = locale.currency(moradia[6], grouping=True, symbol=True)
-        b.info(f'Valor: {valor}')
+        b.info(f'Valor: :green[{valor}]')

@@ -197,8 +197,10 @@ def pesquisa_moradia(cpf):
     except pyodbc.Error as e:
         print("Error in connection", e)
 
-#pesquisa_permanencia('12079226762')
-#pesquisa_baa('08697038626')
-#pesquisa_nada_consta('05700382784')
-#pesquisa_mobilidade('08333147690')
-#pesquisa_moradia('17839931707')
+
+if __name__ == '__main__':
+    print(pesquisa_permanencia('12079226762'))
+    print(pesquisa_apoio('08697038626'))
+    print(pesquisa_nada_consta('05700382784'))
+    print(pesquisa_mobilidade('08333147690'))
+    print(pesquisa_moradia('17839931707'))

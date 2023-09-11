@@ -1,3 +1,6 @@
 venv
 .vscode
-fotos/Thumbs.db
+fotos/
+**/__pycache__
+*pyc
+docs/
